@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy import inspect
 
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, engine
 from app.models.usuario import RolUsuario
 from app.services.auth_service import create_seed_user
 
@@ -32,8 +33,41 @@ class SeedSettings(BaseSettings):
         return password
 
 
+def _esquema_listo() -> bool:
+    """Indica si la tabla de usuarios ya existe en la base configurada."""
+    return inspect(engine).has_table("usuarios")
+
+
+def _cargar_configuracion() -> SeedSettings:
+    """Lee SEED_* del entorno con un mensaje claro si falta configuracion."""
+    try:
+        return SeedSettings()
+    except ValidationError as error:
+        campos = sorted(
+            str(item["loc"][0])
+            for item in error.errors()
+            if item.get("loc")
+        )
+        raise RuntimeError(
+            "Falta configuracion de semilla en el entorno (.env): "
+            f"{', '.join(campos)}. Paso pendiente: crea el archivo .env a "
+            "partir de .env.example y define todos los SEED_* (usuario, "
+            "email, nombre y contrasena de al menos 12 caracteres)."
+        ) from error
+
+
 def seed_users() -> None:
-    config = SeedSettings()
+    if not _esquema_listo():
+        raise RuntimeError(
+            "La base de datos no tiene el esquema inicializado (falta la "
+            "tabla 'usuarios'). Paso pendiente: inicializa el esquema antes "
+            "de crear usuarios con:\n"
+            "  alembic upgrade head\n"
+            "y despues vuelve a ejecutar:\n"
+            "  python seed.py"
+        )
+
+    config = _cargar_configuracion()
     usuarios = (
         (
             config.admin_username,

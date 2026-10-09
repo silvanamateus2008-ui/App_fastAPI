@@ -28,13 +28,14 @@ def upgrade() -> None:
         sa.Column("rol", sa.String(length=20), nullable=False),
         sa.Column("activo", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id_usuario", name=op.f("pk_usuarios")),
-        sa.UniqueConstraint("email", name=op.f("uq_usuarios_email")),
-        sa.UniqueConstraint("username", name=op.f("uq_usuarios_username")),
     )
+    # El modelo declara username/email con unique=True e index=True: SQLAlchemy
+    # genera indices unicos (no un UniqueConstraint aparte). Se replican aqui
+    # para que el esquema de Alembic coincida con el de los modelos.
     with op.batch_alter_table("usuarios", schema=None) as batch_op:
         batch_op.create_index(batch_op.f("ix_usuarios_id_usuario"), ["id_usuario"], unique=False)
-        batch_op.create_index(batch_op.f("ix_usuarios_username"), ["username"], unique=False)
-        batch_op.create_index(batch_op.f("ix_usuarios_email"), ["email"], unique=False)
+        batch_op.create_index(batch_op.f("ix_usuarios_username"), ["username"], unique=True)
+        batch_op.create_index(batch_op.f("ix_usuarios_email"), ["email"], unique=True)
 
     op.create_table(
         "Cliente",
