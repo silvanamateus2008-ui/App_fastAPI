@@ -17,16 +17,20 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.create_check_constraint(
-        op.f("ck_Producto_stock_no_negativo"),
-        "Producto",
-        "stock >= 0",
-    )
+    # SQLite no soporta ALTER TABLE ... ADD CONSTRAINT: batch recrea la tabla
+    # una sola vez e incorpora la restriccion (PostgreSQL usa el ALTER normal).
+    # El nombre coincide con el del modelo (CheckConstraint "stock_no_negativo"
+    # + convencion "ck_%(table_name)s_%(constraint_name)s"), sin duplicarla.
+    with op.batch_alter_table("Producto", schema=None) as batch_op:
+        batch_op.create_check_constraint(
+            op.f("ck_Producto_stock_no_negativo"),
+            "stock >= 0",
+        )
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        op.f("ck_Producto_stock_no_negativo"),
-        "Producto",
-        type_="check",
-    )
+    with op.batch_alter_table("Producto", schema=None) as batch_op:
+        batch_op.drop_constraint(
+            op.f("ck_Producto_stock_no_negativo"),
+            type_="check",
+        )
