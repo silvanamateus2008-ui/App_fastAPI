@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.core.config import settings
+from app.core.errors import ErrorNegocio
+from app.routers import auth, clientes, productos, proveedores, ventas
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -33,6 +39,11 @@ async def handle_error_negocio(_, exc: ErrorNegocio):
         content={"detail": exc.mensaje, "code": exc.codigo, "errors": exc.errores},
         headers=exc.headers or None,
     )
+
+
+@app.get("/health", tags=["infraestructura"], summary="Estado de salud")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.exception_handler(RequestValidationError)
