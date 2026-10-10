@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.core.database import SessionLocal
 from pydantic import Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import inspect
@@ -9,6 +10,33 @@ from app.models.usuario import RolUsuario
 from app.services.auth_service import create_seed_user
 
 
+def seed_users() -> None:
+    db = SessionLocal()
+    try:
+        create_seed_user(
+            db,
+            username="admin",
+            email="admin@fabrica.local",
+            nombre="Administrador",
+            password="admin123",
+            rol=RolUsuario.ADMIN.value,
+        )
+        create_seed_user(
+            db,
+            username="almacen",
+            email="almacen@fabrica.local",
+            nombre="Almacen",
+            password="almacen123",
+            rol=RolUsuario.ALMACEN.value,
+        )
+        create_seed_user(
+            db,
+            username="ventas",
+            email="ventas@fabrica.local",
+            nombre="Ventas",
+            password="ventas123",
+            rol=RolUsuario.VENTAS.value,
+        )
 class SeedSettings(BaseSettings):
     admin_username: str = Field(validation_alias="SEED_ADMIN_USERNAME", min_length=1)
     admin_email: str = Field(validation_alias="SEED_ADMIN_EMAIL", min_length=1)
