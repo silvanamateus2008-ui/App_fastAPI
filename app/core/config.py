@@ -1,14 +1,26 @@
 """Configuracion de la aplicacion leida desde variables de entorno."""
 
+import secrets
 from urllib.parse import quote, unquote
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-DEFAULT_SECRET_KEY = "dev-only-insecure-secret-key-please-change"
 DEVELOPMENT_ENVIRONMENTS = {"development", "dev", "test", "testing"}
-UNSAFE_SECRET_KEY_MARKERS = ("REPLACE_WITH", "CHANGE_ME", "TODO")
+UNSAFE_SECRET_KEY_MARKERS = ("REPLACE_WITH", "CHANGE_ME", "TODO", "DEV-ONLY", "INSECURE")
 DEFAULT_DATABASE_URL = "sqlite:///./fabrica.db"
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://10.0.2.2:5173",
+]
+PRIVATE_ORIGIN_REGEX = (
+    r"http://(?:localhost|127\.0\.0\.1|\[::1\]|"
+    r"10\.\d{1,3}\.\d{1,3}\.\d{1,3}|"
+    r"192\.168\.\d{1,3}\.\d{1,3}|"
+    r"172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})"
+    r"(?::5173)?"
+)
 
 
 class Settings(BaseSettings):
@@ -21,6 +33,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     cors_origins: list[str] = ["http://localhost:5173"]
+    secret_key: SecretStr | None = Field(default=None, repr=False)
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    cors_origins: list[str] = Field(default_factory=list)
+    cors_origin_regex: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -30,6 +47,16 @@ class Settings(BaseSettings):
         """Codifica la contrasena del DSN para que sobreviva a ConfigParser."""
         if not isinstance(value, str):
             return value
+        """Normaliza PostgreSQL a psycopg 3 y codifica la contrasena del DSN."""
+        if not isinstance(value, str):
+            return value
+        value = value.strip()
+        for scheme in ("postgres://", "postgresql://"):
+            if value.startswith(scheme):
+                value = f"postgresql+psycopg://{value[len(scheme):]}"
+                break
+        if value.startswith("postgresql+psycopg2://"):
+            value = f"postgresql+psycopg://{value[len('postgresql+psycopg2://'):]}"
         separador = "://"
         if separador not in value:
             return value
@@ -77,6 +104,13 @@ class Settings(BaseSettings):
     @property
     def resolved_database_url(self) -> str:
         return self.database_url or DEFAULT_DATABASE_URL
+
+    @property
+    def signing_secret(self) -> str:
+        """Devuelve la clave ya validada sin exponerla en la representacion del modelo."""
+        if self.secret_key is None:
+            raise RuntimeError("SECRET_KEY no esta configurada")
+        return self.secret_key.get_secret_value()
 
 
 settings = Settings()

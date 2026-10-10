@@ -8,6 +8,7 @@ from app.core.pagination import Pagina, PaginacionParams, paginar
 from app.models.producto import Producto
 from app.models.proveedor import Proveedor
 from app.schemas.producto import ProductoCreate, ProductoUpdate
+from app.services._integridad import eliminar_con_restriccion
 
 
 def _verificar_proveedor(db: Session, proveedor_id: int | None) -> None:
@@ -52,5 +53,4 @@ def eliminar_producto(db: Session, producto_id: int) -> None:
     producto = obtener_producto(db, producto_id)
     if producto.detalles:
         raise ConflictoError("No se puede eliminar un producto con ventas asociadas")
-    db.delete(producto)
-    db.commit()
+    eliminar_con_restriccion(db, producto, "No se puede eliminar un producto con ventas asociadas")

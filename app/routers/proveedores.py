@@ -9,7 +9,7 @@ from app.core.database import get_db
 from app.core.deps import require_roles
 from app.core.pagination import Pagina, PaginacionParams
 from app.models.usuario import RolUsuario, Usuario
-from app.schemas.base import ErrorNegocioOut
+from app.schemas.base import RESPUESTAS_COMUNES, ErrorNegocioOut
 from app.schemas.proveedor import ProveedorCreate, ProveedorOut, ProveedorUpdate
 from app.services.proveedor_service import (
     actualizar_proveedor,
@@ -19,7 +19,11 @@ from app.services.proveedor_service import (
     obtener_proveedor,
 )
 
-router = APIRouter(prefix="/api/proveedores", tags=["proveedores"])
+router = APIRouter(
+    prefix="/api/proveedores",
+    tags=["proveedores"],
+    responses=RESPUESTAS_COMUNES,
+)
 
 almacen_y_admin = require_roles(RolUsuario.ADMIN, RolUsuario.ALMACEN)
 solo_administradores = require_roles(RolUsuario.ADMIN)

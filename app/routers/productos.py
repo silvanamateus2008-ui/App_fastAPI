@@ -9,7 +9,7 @@ from app.core.database import get_db
 from app.core.deps import require_roles
 from app.core.pagination import Pagina, PaginacionParams
 from app.models.usuario import RolUsuario, Usuario
-from app.schemas.base import ErrorNegocioOut
+from app.schemas.base import RESPUESTAS_COMUNES, ErrorNegocioOut
 from app.schemas.producto import ProductoCreate, ProductoOut, ProductoUpdate
 from app.services.producto_service import (
     actualizar_producto,
@@ -19,7 +19,11 @@ from app.services.producto_service import (
     obtener_producto,
 )
 
-router = APIRouter(prefix="/api/productos", tags=["productos"])
+router = APIRouter(
+    prefix="/api/productos",
+    tags=["productos"],
+    responses=RESPUESTAS_COMUNES,
+)
 
 cualquiera_autorizado = require_roles(
     RolUsuario.ADMIN,

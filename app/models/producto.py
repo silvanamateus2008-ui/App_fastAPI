@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DECIMAL, ForeignKey, Integer, String
+from sqlalchemy import DECIMAL, CheckConstraint, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 class Producto(Base):
     __tablename__ = "Producto"
+    __table_args__ = (CheckConstraint("stock >= 0", name="stock_no_negativo"),)
 
     id_producto: Mapped[int] = mapped_column("id_Producto", primary_key=True, index=True)
     nombre_producto: Mapped[str] = mapped_column("nombreProducto", String(120), nullable=False)

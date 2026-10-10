@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.core.errors import ConflictoError, StockInsuficienteError
+from app.core.errors import ConflictoError, ReglaNegocioError, StockInsuficienteError
 from app.schemas.venta import VentaCreate
 from app.services.producto_service import eliminar_producto
 from app.services.venta_service import crear_venta
@@ -40,6 +40,22 @@ def test_venta_falla_si_no_hay_stock(db_session: Session) -> None:
         crear_venta(db_session, venta)
 
 
+def test_venta_rechaza_productos_repetidos(db_session: Session) -> None:
+    cliente = factories.crear_cliente(db_session)
+    producto = factories.crear_producto(db_session, stock=10)
+    venta = VentaCreate(
+        id_cliente=cliente.id_cliente,
+        detalles=[
+            {"id_producto": producto.id_producto, "cantidad": 2},
+            {"id_producto": producto.id_producto, "cantidad": 3},
+        ],
+    )
+
+    with pytest.raises(ReglaNegocioError, match="repite el mismo producto"):
+        crear_venta(db_session, venta)
+
+    db_session.refresh(producto)
+    assert producto.stock == 10
 def test_producto_con_ventas_no_puede_eliminarse(db_session: Session) -> None:
     cliente = factories.crear_cliente(db_session)
     producto = factories.crear_producto(db_session, stock=10)

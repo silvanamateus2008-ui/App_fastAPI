@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 
@@ -19,4 +19,20 @@ class ErrorNegocioOut(CamelCaseSchema):
 
     detail: str
     code: str
-    errors: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+
+
+RESPUESTAS_COMUNES = {
+    401: {
+        "description": "Se requiere autenticacion.",
+        "model": ErrorNegocioOut,
+    },
+    403: {
+        "description": "El usuario no tiene permisos para esta operacion.",
+        "model": ErrorNegocioOut,
+    },
+    422: {
+        "description": "La solicitud contiene datos invalidos.",
+        "model": ErrorNegocioOut,
+    }
+}

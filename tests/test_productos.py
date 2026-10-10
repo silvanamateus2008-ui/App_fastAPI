@@ -3,6 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from tests import factories
@@ -174,6 +175,18 @@ def test_precio_y_stock_se_validan_con_422(
     assert precio_cero.status_code == 422
     assert stock_negativo.status_code == 422
     assert nombre_vacio.status_code == 422
+
+
+def test_la_base_rechaza_stock_negativo(db_session: Session) -> None:
+    producto = factories.crear_producto(db_session)
+    producto.stock = -1
+
+    try:
+        db_session.commit()
+    except IntegrityError:
+        db_session.rollback()
+    else:
+        raise AssertionError("La base de datos acepto stock negativo")
 
 
 def test_los_datos_de_producto_exigen_token(client: TestClient) -> None:

@@ -7,6 +7,7 @@ from app.core.errors import ConflictoError, NoEncontradoError
 from app.core.pagination import Pagina, PaginacionParams, paginar
 from app.models.proveedor import Proveedor
 from app.schemas.proveedor import ProveedorCreate, ProveedorUpdate
+from app.services._integridad import eliminar_con_restriccion
 
 
 def listar_proveedores(db: Session, paginacion: PaginacionParams) -> Pagina[Proveedor]:
@@ -45,5 +46,8 @@ def eliminar_proveedor(db: Session, proveedor_id: int) -> None:
     proveedor = obtener_proveedor(db, proveedor_id)
     if proveedor.productos:
         raise ConflictoError("No se puede eliminar un proveedor con productos asociados")
-    db.delete(proveedor)
-    db.commit()
+    eliminar_con_restriccion(
+        db,
+        proveedor,
+        "No se puede eliminar un proveedor con productos asociados",
+    )

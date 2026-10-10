@@ -14,6 +14,15 @@ from app.schemas.venta import VentaCreate, VentaOut
 from app.services.venta_service import crear_venta, eliminar_venta, listar_ventas, obtener_venta
 
 router = APIRouter(prefix="/api/ventas", tags=["ventas"])
+from app.schemas.base import RESPUESTAS_COMUNES, ErrorNegocioOut
+from app.schemas.venta import VentaCreate, VentaOut
+from app.services.venta_service import crear_venta, eliminar_venta, listar_ventas, obtener_venta
+
+router = APIRouter(
+    prefix="/api/ventas",
+    tags=["ventas"],
+    responses=RESPUESTAS_COMUNES,
+)
 
 ventas_y_admin = require_roles(RolUsuario.ADMIN, RolUsuario.VENTAS)
 solo_administradores = require_roles(RolUsuario.ADMIN)

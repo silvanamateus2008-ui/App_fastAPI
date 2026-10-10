@@ -24,7 +24,7 @@ def get_current_user(
     if token is None:
         raise NoAutorizadoError
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm])
+        payload = jwt.decode(token, settings.signing_secret, algorithms=[settings.jwt_algorithm])
         usuario_id = int(payload["sub"])
         rol = payload["role"]
     except (jwt.PyJWTError, KeyError, TypeError, ValueError):

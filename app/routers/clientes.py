@@ -9,7 +9,7 @@ from app.core.database import get_db
 from app.core.deps import require_roles
 from app.core.pagination import Pagina, PaginacionParams
 from app.models.usuario import RolUsuario, Usuario
-from app.schemas.base import ErrorNegocioOut
+from app.schemas.base import RESPUESTAS_COMUNES, ErrorNegocioOut
 from app.schemas.cliente import ClienteCreate, ClienteOut, ClienteUpdate
 from app.services.cliente_service import (
     actualizar_cliente,
@@ -19,7 +19,11 @@ from app.services.cliente_service import (
     obtener_cliente,
 )
 
-router = APIRouter(prefix="/api/clientes", tags=["clientes"])
+router = APIRouter(
+    prefix="/api/clientes",
+    tags=["clientes"],
+    responses=RESPUESTAS_COMUNES,
+)
 
 cualquiera_autorizado = require_roles(
     RolUsuario.ADMIN,

@@ -7,6 +7,7 @@ from app.core.errors import ConflictoError, NoEncontradoError
 from app.core.pagination import Pagina, PaginacionParams, paginar
 from app.models.cliente import Cliente
 from app.schemas.cliente import ClienteCreate, ClienteUpdate
+from app.services._integridad import eliminar_con_restriccion
 
 
 def listar_clientes(db: Session, paginacion: PaginacionParams) -> Pagina[Cliente]:
@@ -41,5 +42,4 @@ def eliminar_cliente(db: Session, cliente_id: int) -> None:
     cliente = obtener_cliente(db, cliente_id)
     if cliente.ventas:
         raise ConflictoError("No se puede eliminar un cliente con ventas asociadas")
-    db.delete(cliente)
-    db.commit()
+    eliminar_con_restriccion(db, cliente, "No se puede eliminar un cliente con ventas asociadas")

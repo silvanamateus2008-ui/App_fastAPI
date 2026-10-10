@@ -14,6 +14,15 @@ from app.schemas.usuario import UsuarioOut
 from app.services.auth_service import login_user
 
 router = APIRouter(prefix="/api/auth", tags=["autenticacion"])
+from app.schemas.base import RESPUESTAS_COMUNES, ErrorNegocioOut
+from app.schemas.usuario import UsuarioOut
+from app.services.auth_service import login_user
+
+router = APIRouter(
+    prefix="/api/auth",
+    tags=["autenticacion"],
+    responses=RESPUESTAS_COMUNES,
+)
 
 NO_AUTORIZADO = {
     401: {"description": "Credenciales invalidas", "model": ErrorNegocioOut},
