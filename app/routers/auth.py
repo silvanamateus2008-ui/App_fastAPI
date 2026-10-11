@@ -9,6 +9,11 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.usuario import Usuario
 from app.schemas.auth import LoginRequest, TokenOut
+from app.schemas.base import ErrorNegocioOut
+from app.schemas.usuario import UsuarioOut
+from app.services.auth_service import login_user
+
+router = APIRouter(prefix="/api/auth", tags=["autenticacion"])
 from app.schemas.base import RESPUESTAS_COMUNES, ErrorNegocioOut
 from app.schemas.usuario import UsuarioOut
 from app.services.auth_service import login_user

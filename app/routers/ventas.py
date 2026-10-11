@@ -9,6 +9,11 @@ from app.core.database import get_db
 from app.core.deps import require_roles
 from app.core.pagination import Pagina, PaginacionParams
 from app.models.usuario import RolUsuario, Usuario
+from app.schemas.base import ErrorNegocioOut
+from app.schemas.venta import VentaCreate, VentaOut
+from app.services.venta_service import crear_venta, eliminar_venta, listar_ventas, obtener_venta
+
+router = APIRouter(prefix="/api/ventas", tags=["ventas"])
 from app.schemas.base import RESPUESTAS_COMUNES, ErrorNegocioOut
 from app.schemas.venta import VentaCreate, VentaOut
 from app.services.venta_service import crear_venta, eliminar_venta, listar_ventas, obtener_venta

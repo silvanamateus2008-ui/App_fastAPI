@@ -23,6 +23,23 @@ depends_on = None
 
 
 def upgrade() -> None:
+    op.alter_column(
+        "usuarios",
+        "rol",
+        existing_type=sa.String(length=20),
+        type_=sa.String(length=7),
+        existing_nullable=False,
+    )
+
+
+def downgrade() -> None:
+    op.alter_column(
+        "usuarios",
+        "rol",
+        existing_type=sa.String(length=7),
+        type_=sa.String(length=20),
+        existing_nullable=False,
+    )
     # batch_alter_table recrea la tabla en SQLite (que no soporta ALTER COLUMN)
     # y ejecuta el ALTER normal en PostgreSQL.
     with op.batch_alter_table("usuarios", schema=None) as batch_op:

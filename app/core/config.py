@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     app_name: str = "API Fabrica"
     environment: str = "development"
     database_url: str | None = None
+    secret_key: str = DEFAULT_SECRET_KEY
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    cors_origins: list[str] = ["http://localhost:5173"]
     secret_key: SecretStr | None = Field(default=None, repr=False)
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
@@ -40,6 +44,9 @@ class Settings(BaseSettings):
     @field_validator("database_url", mode="before")
     @classmethod
     def encode_database_password(cls, value: object) -> object:
+        """Codifica la contrasena del DSN para que sobreviva a ConfigParser."""
+        if not isinstance(value, str):
+            return value
         """Normaliza PostgreSQL a psycopg 3 y codifica la contrasena del DSN."""
         if not isinstance(value, str):
             return value
@@ -65,41 +72,25 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_environment(self) -> "Settings":
-        """Valida secretos y origenes permitidos antes de iniciar la aplicacion."""
+        """Impide arrancar en produccion con una configuracion insegura o ambigua."""
         self.environment = self.environment.strip().lower()
         if not self.environment:
             raise ValueError("ENVIRONMENT no puede estar vacio")
-
-        if self.secret_key is None or not self.secret_key.get_secret_value().strip():
-            if not self.is_development:
-                raise ValueError("Fuera de desarrollo se requiere SECRET_KEY explicita")
-            self.secret_key = SecretStr(secrets.token_urlsafe(48))
-        self._validate_secret_key()
-
-        if self.is_development:
-            if self.cors_origin_regex is None:
-                self.cors_origin_regex = PRIVATE_ORIGIN_REGEX
-            self.cors_origins = list(dict.fromkeys([*DEFAULT_CORS_ORIGINS, *self.cors_origins]))
-        else:
+        if not self.is_development:
             if not self.database_url:
-                raise ValueError("Fuera de desarrollo se requiere DATABASE_URL explicita")
-            if not self.cors_origins:
-                raise ValueError("Fuera de desarrollo se requiere CORS_ORIGINS explicito")
-            if any(origin in DEFAULT_CORS_ORIGINS for origin in self.cors_origins):
-                raise ValueError("CORS_ORIGINS de desarrollo no se permiten fuera de desarrollo")
-            if self.cors_origin_regex == PRIVATE_ORIGIN_REGEX:
-                raise ValueError(
-                    "CORS_ORIGIN_REGEX de desarrollo no se permite fuera de desarrollo"
-                )
+                raise ValueError("Fuera de desarrollo se requiere DATABASE_URL explicito")
+            self._validate_secret_key_for_deployment()
         return self
 
-    def _validate_secret_key(self) -> None:
-        if self.secret_key is None:
-            raise ValueError("SECRET_KEY no esta configurada")
-        secret_key = self.secret_key.get_secret_value()
-        if any(marker in secret_key.upper() for marker in UNSAFE_SECRET_KEY_MARKERS):
+    def _validate_secret_key_for_deployment(self) -> None:
+        if self.secret_key == DEFAULT_SECRET_KEY:
+            raise ValueError(
+                "SECRET_KEY por defecto no permitido fuera de desarrollo; "
+                'genere una con python -c "import secrets; print(secrets.token_urlsafe(48))"'
+            )
+        if any(marker in self.secret_key.upper() for marker in UNSAFE_SECRET_KEY_MARKERS):
             raise ValueError("SECRET_KEY contiene un marcador sin reemplazar")
-        if len(secret_key) < 32:
+        if len(self.secret_key) < 32:
             raise ValueError("SECRET_KEY debe tener al menos 32 caracteres")
 
     @property

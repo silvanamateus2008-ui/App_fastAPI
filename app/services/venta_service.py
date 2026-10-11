@@ -77,6 +77,8 @@ def crear_venta(db: Session, venta_in: VentaCreate) -> Venta:
         db.add(venta)
         db.flush()
 
+        for detalle_in in venta_in.detalles:
+            producto = db.get(Producto, detalle_in.id_producto)
         productos = _bloquear_productos(db, productos_solicitados)
         for detalle_in in venta_in.detalles:
             producto = productos.get(detalle_in.id_producto)
