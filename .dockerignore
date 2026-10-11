@@ -1,0 +1,15 @@
+.env
+.env.*
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.git/
+.gitignore
+tests/
+fabrica.db
+*.sqlite
+*.sqlite3
+README.md
+AGENTS.md
