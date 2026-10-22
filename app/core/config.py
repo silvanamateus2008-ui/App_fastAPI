@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     cors_origins: list[str] = Field(default_factory=list)
+    cors_react: list[str] = Field(default_factory=list)
     cors_origin_regex: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -79,12 +80,21 @@ class Settings(BaseSettings):
         if self.is_development:
             if self.cors_origin_regex is None:
                 self.cors_origin_regex = PRIVATE_ORIGIN_REGEX
-            self.cors_origins = list(dict.fromkeys([*DEFAULT_CORS_ORIGINS, *self.cors_origins]))
+            self.cors_origins = list(
+                dict.fromkeys(
+                    [*DEFAULT_CORS_ORIGINS, *self.cors_origins, *self.cors_react]
+                )
+            )
         else:
             if not self.database_url:
                 raise ValueError("Fuera de desarrollo se requiere DATABASE_URL explicita")
+            self.cors_origins = list(
+                dict.fromkeys([*self.cors_origins, *self.cors_react])
+            )
             if not self.cors_origins:
-                raise ValueError("Fuera de desarrollo se requiere CORS_ORIGINS explicito")
+                raise ValueError(
+                    "Se requiere CORS_ORIGINS o CORS_REACT explicito fuera de desarrollo"
+                )
             if any(origin in DEFAULT_CORS_ORIGINS for origin in self.cors_origins):
                 raise ValueError("CORS_ORIGINS de desarrollo no se permiten fuera de desarrollo")
             if self.cors_origin_regex == PRIVATE_ORIGIN_REGEX:
