@@ -15,6 +15,34 @@ def test_development_generates_a_secure_secret_and_cors_origins() -> None:
     assert config.cors_origins == DEFAULT_CORS_ORIGINS
 
 
+def test_cors_origins_and_cors_react_are_combined() -> None:
+    config = Settings(
+        _env_file=None,
+        environment="production",
+        database_url="postgresql://db/fabrica",
+        secret_key="x" * 32,
+        cors_origins=["https://fabrica-flutter.example"],
+        cors_react=["https://fabrica-react.example"],
+    )
+
+    assert config.cors_origins == [
+        "https://fabrica-flutter.example",
+        "https://fabrica-react.example",
+    ]
+
+
+def test_cors_react_can_be_the_only_production_origin() -> None:
+    config = Settings(
+        _env_file=None,
+        environment="production",
+        database_url="postgresql://db/fabrica",
+        secret_key="x" * 32,
+        cors_react=["https://fabrica-react.example"],
+    )
+
+    assert config.cors_origins == ["https://fabrica-react.example"]
+
+
 def test_standard_postgresql_url_uses_psycopg_three() -> None:
     config = Settings(
         _env_file=None,
